@@ -16,9 +16,6 @@
  */
 package tech.tresearchgroup.libraries.compression.controller;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.*;
 import java.nio.CharBuffer;
 
@@ -29,7 +26,6 @@ import java.nio.CharBuffer;
  * @author icedrake
  */
 public class Smaz {
-    private static final Logger log = LoggerFactory.getLogger(Smaz.class);
 
     /* Compression CODEBOOK, used for compression */
     private static final String[] CODEBOOK = {
@@ -218,7 +214,6 @@ public class Smaz {
             try {
                 baos.write(str.getBytes());
             } catch (IOException e) {
-                log.error("Error outputting verbatim data", e);
             }
         }
     }

@@ -126,7 +126,7 @@ public class ByteCompressionController {
         return byteOutputStream.toByteArray();
     }
 
-    public static byte[] decompress(InputStream data, CompressionMethodEnum method) throws IOException {
+    public static byte[] decompress(ByteArrayInputStream data, CompressionMethodEnum method) throws IOException {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         int len;
         byte[] buffer = new byte[1024];

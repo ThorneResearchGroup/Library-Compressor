@@ -7,9 +7,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import tech.tresearchgroup.schemas.compression.model.CompressionMethodEnum;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -63,8 +66,7 @@ class CompressDecompress {
     @Test
     @Order(3)
     void bzip2Compress() throws IOException {
-        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(TEST_DATA.getBytes(StandardCharsets.UTF_8));
-        byte[] compressed = ByteCompressionController.compress(byteArrayInputStream, CompressionMethodEnum.BZIP2);
+        byte[] compressed = ByteCompressionController.compress(new ByteArrayInputStream(TEST_DATA.getBytes()), CompressionMethodEnum.BZIP2);
         assertNotNull(compressed);
         assertTrue(compressed.length > 0);
         System.out.println("BZip2 compressed length: " + compressed.length);
@@ -77,14 +79,13 @@ class CompressDecompress {
         assertNotNull(bzipCompressed);
         byte[] decompressed = ByteCompressionController.decompress(new ByteArrayInputStream(bzipCompressed), CompressionMethodEnum.BZIP2);
         assertNotNull(decompressed);
-        assertEquals(TEST_DATA, new String(decompressed, StandardCharsets.UTF_8));
+        assertEquals(TEST_DATA, new String(decompressed));
     }
 
     @Test
     @Order(5)
     void deflateCompress() throws IOException {
-        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(TEST_DATA.getBytes(StandardCharsets.UTF_8));
-        byte[] compressed = ByteCompressionController.compress(byteArrayInputStream, CompressionMethodEnum.DEFLATE);
+        byte[] compressed = ByteCompressionController.compress(new ByteArrayInputStream(TEST_DATA.getBytes()), CompressionMethodEnum.DEFLATE);
         assertNotNull(compressed);
         assertTrue(compressed.length > 0);
         System.out.println("Deflate compressed length: " + compressed.length);
@@ -97,7 +98,7 @@ class CompressDecompress {
         assertNotNull(deflateCompressed);
         byte[] decompressed = ByteCompressionController.decompress(new ByteArrayInputStream(deflateCompressed), CompressionMethodEnum.DEFLATE);
         assertNotNull(decompressed);
-        assertEquals(TEST_DATA, new String(decompressed, StandardCharsets.UTF_8));
+        assertEquals(TEST_DATA, new String(decompressed));
     }
 
     @Test
@@ -277,7 +278,6 @@ class CompressDecompress {
         assertNotNull(smazCompressed);
         Smaz smaz = new Smaz();
         String decompressed = smaz.decompress(smazCompressed);
-        System.out.println("Decompressed: " + decompressed);
         assertEquals(decompressed, TEST_DATA);
     }
 }

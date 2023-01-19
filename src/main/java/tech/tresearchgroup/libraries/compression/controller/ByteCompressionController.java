@@ -1,20 +1,20 @@
 package tech.tresearchgroup.libraries.compression.controller;
 
 import com.aayushatharva.brotli4j.Brotli4jLoader;
+import com.aayushatharva.brotli4j.decoder.BrotliInputStream;
 import com.aayushatharva.brotli4j.encoder.BrotliOutputStream;
 import com.aayushatharva.brotli4j.encoder.Encoder;
+import com.github.luben.zstd.ZstdInputStream;
 import com.github.luben.zstd.ZstdOutputStream;
+import net.jpountz.lz4.LZ4BlockInputStream;
 import net.jpountz.lz4.LZ4BlockOutputStream;
+import net.jpountz.lz4.LZ4FrameInputStream;
 import net.jpountz.lz4.LZ4FrameOutputStream;
-import org.anarres.lzo.LzoAlgorithm;
-import org.anarres.lzo.LzoCompressor;
-import org.anarres.lzo.LzoLibrary;
-import org.anarres.lzo.LzoOutputStream;
-import org.tukaani.xz.LZMA2Options;
-import org.tukaani.xz.LZMAOutputStream;
-import org.tukaani.xz.XZ;
-import org.tukaani.xz.XZOutputStream;
+import org.anarres.lzo.*;
+import org.tukaani.xz.*;
+import org.xbib.io.compress.bzip2.Bzip2InputStream;
 import org.xbib.io.compress.bzip2.Bzip2OutputStream;
+import org.xerial.snappy.SnappyInputStream;
 import org.xerial.snappy.SnappyOutputStream;
 import tech.tresearchgroup.schemas.compression.model.CompressionMethodEnum;
 
@@ -22,7 +22,9 @@ import java.io.*;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.zip.DeflaterInputStream;
 import java.util.zip.DeflaterOutputStream;
+import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 public class ByteCompressionController {
@@ -126,42 +128,96 @@ public class ByteCompressionController {
     }
 
     public static byte[] decompress(InputStream data, CompressionMethodEnum method) throws IOException {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        int len;
+        byte[] buffer = new byte[1024];
         switch (method) {
             case BROTLI -> {
-
+                try {
+                    Brotli4jLoader.ensureAvailability();
+                } catch (UnsatisfiedLinkError e) {
+                    return null;
+                }
+                BrotliInputStream compressionStream = new BrotliInputStream(data);
+                while ((len = data.read(buffer)) != -1) {
+                    byteArrayOutputStream.write(buffer, 0, len);
+                }
+                compressionStream.close();
             }
             case BZIP2 -> {
-
+                Bzip2InputStream compressionStream = new Bzip2InputStream(data);
+                while ((len = data.read(buffer)) != -1) {
+                    byteArrayOutputStream.write(buffer, 0, len);
+                }
+                compressionStream.close();
             }
             case DEFLATE -> {
-
+                DeflaterInputStream compressionStream = new DeflaterInputStream(data);
+                while ((len = data.read(buffer)) != -1) {
+                    byteArrayOutputStream.write(buffer, 0, len);
+                }
+                compressionStream.close();
             }
             case GZIP -> {
-
+                GZIPInputStream compressionStream = new GZIPInputStream(data);
+                while ((len = data.read(buffer)) != -1) {
+                    byteArrayOutputStream.write(buffer, 0, len);
+                }
+                compressionStream.close();
             }
             case LZ4_BLOCK -> {
-
+                LZ4BlockInputStream compressionStream = new LZ4BlockInputStream(data);
+                while ((len = data.read(buffer)) != -1) {
+                    byteArrayOutputStream.write(buffer, 0, len);
+                }
+                compressionStream.close();
             }
             case LZ4_FRAMED -> {
-
+                LZ4FrameInputStream compressionStream = new LZ4FrameInputStream(data);
+                while ((len = data.read(buffer)) != -1) {
+                    byteArrayOutputStream.write(buffer, 0, len);
+                }
+                compressionStream.close();
             }
             case LZMA -> {
-
+                LZMAInputStream compressionStream = new LZMAInputStream(data);
+                while ((len = data.read(buffer)) != -1) {
+                    byteArrayOutputStream.write(buffer, 0, len);
+                }
+                compressionStream.close();
             }
             case SNAPPY_FRAMED -> {
-
+                SnappyInputStream compressionStream = new SnappyInputStream(data);
+                while ((len = data.read(buffer)) != -1) {
+                    byteArrayOutputStream.write(buffer, 0, len);
+                }
+                compressionStream.close();
             }
             case XZ -> {
-
+                XZInputStream compressionStream = new XZInputStream(data);
+                while ((len = data.read(buffer)) != -1) {
+                    byteArrayOutputStream.write(buffer, 0, len);
+                }
+                compressionStream.close();
             }
             case ZSTD -> {
-
+                ZstdInputStream compressionStream = new ZstdInputStream(data);
+                while ((len = data.read(buffer)) != -1) {
+                    byteArrayOutputStream.write(buffer, 0, len);
+                }
+                compressionStream.close();
             }
             case LZO -> {
-
+                LzoAlgorithm algorithm = LzoAlgorithm.LZO1X;
+                LzoDecompressor decompressor = LzoLibrary.getInstance().newDecompressor(algorithm, null);
+                LzoInputStream compressionStream = new LzoInputStream(data, decompressor);
+                while ((len = data.read(buffer)) != -1) {
+                    byteArrayOutputStream.write(buffer, 0, len);
+                }
+                compressionStream.close();
             }
         }
-        return null;
+        return byteArrayOutputStream.toByteArray();
     }
 
     public static Map<String, Double> getBestCompressor(File file) throws IOException {

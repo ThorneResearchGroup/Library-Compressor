@@ -19,13 +19,11 @@ import org.xerial.snappy.SnappyOutputStream;
 import tech.tresearchgroup.schemas.compression.model.CompressionMethodEnum;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.zip.DeflaterInputStream;
-import java.util.zip.DeflaterOutputStream;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
+import java.util.zip.*;
 
 public class ByteCompressionController {
     public static byte[] compress(InputStream data, CompressionMethodEnum method) throws IOException {
@@ -124,10 +122,11 @@ public class ByteCompressionController {
             }
         }
         byteOutputStream.close();
+        byteOutputStream.flush();
         return byteOutputStream.toByteArray();
     }
 
-    public static byte[] decompress(InputStream data, CompressionMethodEnum method) throws IOException {
+    public static byte[] decompress(ByteArrayInputStream data, CompressionMethodEnum method) throws IOException {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         int len;
         byte[] buffer = new byte[1024];
@@ -139,70 +138,70 @@ public class ByteCompressionController {
                     return null;
                 }
                 BrotliInputStream compressionStream = new BrotliInputStream(data);
-                while ((len = data.read(buffer)) != -1) {
+                while ((len = compressionStream.read(buffer)) != -1) {
                     byteArrayOutputStream.write(buffer, 0, len);
                 }
                 compressionStream.close();
             }
             case BZIP2 -> {
                 Bzip2InputStream compressionStream = new Bzip2InputStream(data);
-                while ((len = data.read(buffer)) != -1) {
+                while ((len = compressionStream.read(buffer)) != -1) {
                     byteArrayOutputStream.write(buffer, 0, len);
                 }
                 compressionStream.close();
             }
             case DEFLATE -> {
-                DeflaterInputStream compressionStream = new DeflaterInputStream(data);
-                while ((len = data.read(buffer)) != -1) {
+                InflaterInputStream compressionStream = new InflaterInputStream(data);
+                while ((len = compressionStream.read(buffer)) != -1) {
                     byteArrayOutputStream.write(buffer, 0, len);
                 }
                 compressionStream.close();
             }
             case GZIP -> {
                 GZIPInputStream compressionStream = new GZIPInputStream(data);
-                while ((len = data.read(buffer)) != -1) {
+                while ((len = compressionStream.read(buffer)) != -1) {
                     byteArrayOutputStream.write(buffer, 0, len);
                 }
                 compressionStream.close();
             }
             case LZ4_BLOCK -> {
                 LZ4BlockInputStream compressionStream = new LZ4BlockInputStream(data);
-                while ((len = data.read(buffer)) != -1) {
+                while ((len = compressionStream.read(buffer)) != -1) {
                     byteArrayOutputStream.write(buffer, 0, len);
                 }
                 compressionStream.close();
             }
             case LZ4_FRAMED -> {
                 LZ4FrameInputStream compressionStream = new LZ4FrameInputStream(data);
-                while ((len = data.read(buffer)) != -1) {
+                while ((len = compressionStream.read(buffer)) != -1) {
                     byteArrayOutputStream.write(buffer, 0, len);
                 }
                 compressionStream.close();
             }
             case LZMA -> {
                 LZMAInputStream compressionStream = new LZMAInputStream(data);
-                while ((len = data.read(buffer)) != -1) {
+                while ((len = compressionStream.read(buffer)) != -1) {
                     byteArrayOutputStream.write(buffer, 0, len);
                 }
                 compressionStream.close();
             }
             case SNAPPY_FRAMED -> {
                 SnappyInputStream compressionStream = new SnappyInputStream(data);
-                while ((len = data.read(buffer)) != -1) {
+                while ((len = compressionStream.read(buffer)) != -1) {
                     byteArrayOutputStream.write(buffer, 0, len);
                 }
                 compressionStream.close();
             }
             case XZ -> {
                 XZInputStream compressionStream = new XZInputStream(data);
-                while ((len = data.read(buffer)) != -1) {
+                while ((len = compressionStream.read(buffer)) != -1) {
                     byteArrayOutputStream.write(buffer, 0, len);
                 }
                 compressionStream.close();
             }
             case ZSTD -> {
                 ZstdInputStream compressionStream = new ZstdInputStream(data);
-                while ((len = data.read(buffer)) != -1) {
+                while ((len = compressionStream.read(buffer)) != -1) {
                     byteArrayOutputStream.write(buffer, 0, len);
                 }
                 compressionStream.close();
@@ -211,24 +210,25 @@ public class ByteCompressionController {
                 LzoAlgorithm algorithm = LzoAlgorithm.LZO1X;
                 LzoDecompressor decompressor = LzoLibrary.getInstance().newDecompressor(algorithm, null);
                 LzoInputStream compressionStream = new LzoInputStream(data, decompressor);
-                while ((len = data.read(buffer)) != -1) {
+                while ((len = compressionStream.read(buffer)) != -1) {
                     byteArrayOutputStream.write(buffer, 0, len);
                 }
                 compressionStream.close();
             }
         }
+        byteArrayOutputStream.flush();
+        byteArrayOutputStream.close();
         return byteArrayOutputStream.toByteArray();
     }
 
     public static Map<String, Double> getBestCompressor(File file) throws IOException {
         Map<String, Double> results = new HashMap<>();
-        long size = Files.size(file.toPath());
         for (CompressionMethodEnum method : CompressionMethodEnum.values()) {
             if (!method.equals(CompressionMethodEnum.SMAZ)) {
                 FileInputStream fis = new FileInputStream(file);
                 byte[] data = ByteCompressionController.compress(fis, method);
                 if(data != null) {
-                    results.put(method.name().toLowerCase(), (double) size - data.length);
+                    results.put(method.name().toLowerCase(), (double) data.length);
                 }
                 fis.close();
             }
@@ -247,7 +247,7 @@ public class ByteCompressionController {
                 ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(string.getBytes());
                 byte[] data = ByteCompressionController.compress(byteArrayInputStream, method);
                 if(data != null) {
-                    results.put(method.name().toLowerCase(), (double) string.length() - data.length);
+                    results.put(method.name().toLowerCase(), (double) data.length);
                 }
                 byteArrayInputStream.close();
             }

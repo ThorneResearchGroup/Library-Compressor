@@ -213,7 +213,7 @@ public class Smaz {
             baos.write(str.length());
             try {
                 baos.write(str.getBytes());
-            } catch (IOException e) {
+            } catch (IOException ignored) {
             }
         }
     }
